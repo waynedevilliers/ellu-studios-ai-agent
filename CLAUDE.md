@@ -125,3 +125,4 @@ An AI agent that acts as ELLU's knowledgeable receptionist, providing personaliz
 This agent serves ELLU Studios' mission to make high-quality fashion education accessible. Success means more students find the right courses, leading to better learning outcomes and business growth.
 
 The agent should feel like talking to ELLU's most knowledgeable and helpful team member who genuinely cares about finding the perfect learning path for each visitor.
+- always review CLAUDE.md before making changes or coding.
