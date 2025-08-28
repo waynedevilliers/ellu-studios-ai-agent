@@ -4,11 +4,15 @@
 import { ConversationState, UserProfile, Message, CourseRecommendation } from '@/types/ellu';
 import { RecommendationEngine } from '@/lib/ellu/recommendations';
 import { containsPromptInjection, sanitizeInput, sanitizeOutput } from '@/lib/security/validation';
+import { ObservabilityManager, performanceMonitor } from '@/lib/observability';
 
 export class ELLUAgent {
   private state: ConversationState;
+  private sessionId: string;
+  private tokenUsage: number = 0;
 
   constructor(sessionId: string) {
+    this.sessionId = sessionId;
     this.state = {
       phase: 'greeting',
       userProfile: {},
@@ -24,9 +28,23 @@ export class ELLUAgent {
    * Implements ReAct pattern: Thought → Action → Observation
    */
   async processMessage(userInput: string): Promise<{ response: string; blocked?: boolean; reason?: string }> {
+    const operationId = `${this.sessionId}-${Date.now()}`;
+    performanceMonitor.startOperation(operationId, 'processMessage', { 
+      sessionId: this.sessionId, 
+      inputLength: userInput.length 
+    });
+    
     try {
       // Security check
       if (containsPromptInjection(userInput)) {
+        await ObservabilityManager.trackError(
+          new Error('Prompt injection detected'),
+          'security',
+          { sessionId: this.sessionId, userInput: userInput.substring(0, 100) + '...' }
+        );
+        
+        performanceMonitor.endOperation(operationId, false, { reason: 'security_violation' });
+        
         return {
           response: "I appreciate your interest, but I can only help with course recommendations and ELLU Studios information. How can I assist you with your fashion education journey?",
           blocked: true,
@@ -39,6 +57,8 @@ export class ELLUAgent {
       
       // Handle very long inputs gracefully
       if (cleanInput.length > 2000) {
+        performanceMonitor.endOperation(operationId, false, { reason: 'message_too_long' });
+        
         return {
           response: "I notice your message is quite long. I'm having trouble processing very lengthy requests. Could you please ask your question in a more concise way? I'm here to help with course recommendations and information about ELLU Studios!",
           blocked: false,
@@ -56,10 +76,40 @@ export class ELLUAgent {
       const cleanResponse = sanitizeOutput(response);
       this.addMessage('agent', cleanResponse);
 
+      // Track successful conversation
+      this.tokenUsage += Math.ceil((cleanInput.length + cleanResponse.length) / 4); // Rough token estimation
+      
+      performanceMonitor.endOperation(operationId, true, { 
+        phase: this.state.phase,
+        responseLength: cleanResponse.length 
+      });
+
+      // Track conversation metrics
+      await ObservabilityManager.trackConversation({
+        sessionId: this.sessionId,
+        messageCount: this.state.conversationHistory.length,
+        tokenUsage: this.tokenUsage,
+        responseTime: performance.now() - parseInt(operationId.split('-')[1]),
+        agentType: 'claude', // Default to claude
+        courseRecommended: this.state.recommendations.length > 0 ? this.state.recommendations[0].course.name : undefined,
+        consultationBooked: this.state.phase === 'scheduling',
+        success: true,
+      });
+
       return { response: cleanResponse };
       
     } catch (error) {
       console.error('Agent processing error:', error);
+      
+      // Track the error
+      await ObservabilityManager.trackError(
+        error as Error,
+        'processMessage',
+        { sessionId: this.sessionId, phase: this.state.phase }
+      );
+      
+      performanceMonitor.endOperation(operationId, false, { error: (error as Error).message });
+      
       return {
         response: "I apologize, but I'm having trouble processing your request right now. Could you please try rephrasing your question about our courses?",
         blocked: false,

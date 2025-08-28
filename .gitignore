@@ -38,6 +38,7 @@ next-env.d.ts
 
 # Markdown files (except README.md)
 *.md
+CLAUDE.md
 !README.md
 
 # IDE files
