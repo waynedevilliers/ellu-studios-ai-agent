@@ -14,7 +14,7 @@ jest.mock('@langchain/openai', () => ({
 
 jest.mock('langchain/agents', () => ({
   AgentExecutor: jest.fn().mockImplementation(() => ({
-    invoke: jest.fn().mockImplementation(({ input }) => {
+    invoke: jest.fn().mockImplementation(({ input }: { input: string }) => {
       // Simulate realistic agent responses based on input
       if (input.includes('Anfänger') && input.includes('Karrierewechsel')) {
         return Promise.resolve({
@@ -70,7 +70,7 @@ describe('E2E Conversation Flow Tests', () => {
       expect(comparison.response).toContain('Drapieren');
 
       // Step 4: Express preference
-      const preference = await agent.processMessage('Ich denke die präzise Schnittkonstruktion interessiert mich mehr');
+      await agent.processMessage('Ich denke die präzise Schnittkonstruktion interessiert mich mehr');
       
       // Update profile
       state = agent.getState();
@@ -103,7 +103,7 @@ describe('E2E Conversation Flow Tests', () => {
       expect(state.userProfile.goals).toContain('sustainability');
 
       // Step 2: Ask about experience level
-      const experience = await agent.processMessage('Ich habe schon etwas Näherfahrung');
+      await agent.processMessage('Ich habe schon etwas Näherfahrung');
       
       state = agent.getState();
       expect(state.userProfile.experience).toBe('some-sewing');
@@ -117,7 +117,7 @@ describe('E2E Conversation Flow Tests', () => {
       expect(structure.response).toBeTruthy();
 
       // Step 5: Express interest in business applications
-      const business = await agent.processMessage('Ich möchte vielleicht später ein nachhaltiges Modelabel gründen');
+      await agent.processMessage('Ich möchte vielleicht später ein nachhaltiges Modelabel gründen');
       
       state = agent.getState();
       expect(state.userProfile.goals).toContain('start-business');
