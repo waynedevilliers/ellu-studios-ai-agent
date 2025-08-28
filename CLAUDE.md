@@ -1,5 +1,11 @@
 # ELLU Studios AI Agent - Claude Code Instructions
 
+## Review Preparation Instructions
+Ask me every 30 to 45 minutes a question relating to 135.md. Also focus on introduction to ai agents.md, buildingagentswithchains.md, advancedagents.md, and memory.md. Ask me a question every 30 to 45 minutes based on this project and these documents to prepare me for my review. Focus on requirements or evaluation criteria in 135.md
+
+## Documentation Scanning Instructions  
+Scan CLAUDE.md and other md documents in /docs after every request/question/instruction I make
+
 ## Project Mission
 Build an intelligent digital concierge for ELLU Studios fashion education platform that transforms how prospective students discover and enroll in pattern-making courses.
 
@@ -126,3 +132,4 @@ This agent serves ELLU Studios' mission to make high-quality fashion education a
 
 The agent should feel like talking to ELLU's most knowledgeable and helpful team member who genuinely cares about finding the perfect learning path for each visitor.
 - always review CLAUDE.md before making changes or coding.
+- scan CLAUDE.md and other md documentents in /docs after every request/question/instruction i make

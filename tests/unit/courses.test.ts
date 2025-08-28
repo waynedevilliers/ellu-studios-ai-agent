@@ -4,16 +4,20 @@
 import { 
   COURSES, 
   LEARNING_JOURNEYS, 
+  COURSE_PACKAGES,
   getCourseById, 
   getCoursesByLevel, 
   getCoursesByCategory,
-  getJourneyById 
+  getJourneyById,
+  getCoursePackageById,
+  getCoursePackagesByLevel,
+  calculatePackageValue
 } from '@/lib/ellu/courses';
 
 describe('Course Catalog', () => {
   describe('Course Data Validation', () => {
-    test('should have at least 15 courses as required by CLAUDE.md', () => {
-      expect(COURSES.length).toBeGreaterThanOrEqual(10); // We have 12, close to requirement
+    test('should have at least 30 courses as per comprehensive structure', () => {
+      expect(COURSES.length).toBeGreaterThanOrEqual(30); // We have 34 courses
     });
 
     test('should have all 4 required learning journeys', () => {
@@ -28,9 +32,12 @@ describe('Course Catalog', () => {
 
     test('should have courses in all required categories', () => {
       const categories = COURSES.map(c => c.category);
-      expect(categories).toContain('construction');
+      expect(categories).toContain('patternmaking');
       expect(categories).toContain('draping');
+      expect(categories).toContain('sewing');
+      expect(categories).toContain('design');
       expect(categories).toContain('digital');
+      expect(categories).toContain('textiles');
       expect(categories).toContain('sustainable');
     });
 
@@ -43,10 +50,12 @@ describe('Course Catalog', () => {
 
     test('should have required flagship courses', () => {
       const courseNames = COURSES.map(c => c.id);
-      expect(courseNames).toContain('klassische-schnittkonstruktion');
-      expect(courseNames).toContain('schnittkonstruktion-drapieren');
-      expect(courseNames).toContain('adobe-illustrator-fashion');
-      expect(courseNames).toContain('sustainable-design-principles');
+      expect(courseNames).toContain('patternmaking-classic-skirt');
+      expect(courseNames).toContain('patternmaking-draping-skirt');
+      expect(courseNames).toContain('adobe-illustrator-basics');
+      expect(courseNames).toContain('sustainable-fashion-concepts');
+      expect(courseNames).toContain('clo3d-course');
+      expect(courseNames).toContain('zero-waste-patternmaking');
     });
   });
 
@@ -135,16 +144,16 @@ describe('Course Catalog', () => {
       const advancedJourney = getJourneyById('advanced-journey');
       
       expect(beginnerJourney?.duration).toBe('4-6 months');
-      expect(advancedJourney?.duration).toBe('2-4 months');
+      expect(advancedJourney?.duration).toBe('3-5 months');
     });
   });
 
   describe('Helper Functions', () => {
     test('getCourseById should return correct course', () => {
-      const course = getCourseById('klassische-schnittkonstruktion');
+      const course = getCourseById('patternmaking-classic-skirt');
       expect(course).toBeDefined();
-      expect(course?.name).toBe('Classical Pattern Construction');
-      expect(course?.nameGerman).toBe('Klassische Schnittkonstruktion');
+      expect(course?.name).toBe('Classical Pattern Making - Skirt');
+      expect(course?.nameGerman).toBe('Klassische Schnittkonstruktion - Rock');
     });
 
     test('getCourseById should return undefined for invalid ID', () => {
@@ -169,14 +178,14 @@ describe('Course Catalog', () => {
     });
 
     test('getCoursesByCategory should filter correctly', () => {
-      const constructionCourses = getCoursesByCategory('construction');
+      const patternmakingCourses = getCoursesByCategory('patternmaking');
       const digitalCourses = getCoursesByCategory('digital');
       
-      expect(constructionCourses.length).toBeGreaterThan(0);
+      expect(patternmakingCourses.length).toBeGreaterThan(0);
       expect(digitalCourses.length).toBeGreaterThan(0);
       
-      constructionCourses.forEach(course => {
-        expect(course.category).toBe('construction');
+      patternmakingCourses.forEach(course => {
+        expect(course.category).toBe('patternmaking');
       });
       
       digitalCourses.forEach(course => {
@@ -196,8 +205,8 @@ describe('Course Catalog', () => {
 
   describe('Course Content Quality', () => {
     test('should have meaningful German names', () => {
-      const germanCourse = getCourseById('klassische-schnittkonstruktion');
-      expect(germanCourse?.nameGerman).toBe('Klassische Schnittkonstruktion');
+      const germanCourse = getCourseById('patternmaking-classic-skirt');
+      expect(germanCourse?.nameGerman).toBe('Klassische Schnittkonstruktion - Rock');
       expect(germanCourse?.nameGerman).not.toBe(germanCourse?.name);
     });
 
@@ -213,6 +222,53 @@ describe('Course Catalog', () => {
         expect(course.description.length).toBeGreaterThan(50);
         expect(course.description).not.toContain('lorem ipsum');
         expect(course.description).not.toContain('placeholder');
+      });
+    });
+  });
+
+  describe('Course Packages', () => {
+    test('should have course packages defined', () => {
+      expect(COURSE_PACKAGES).toBeDefined();
+      expect(COURSE_PACKAGES.length).toBeGreaterThan(0);
+    });
+
+    test('should have beginner package with correct courses', () => {
+      const beginnerPackage = getCoursePackageById('beginner-complete-package');
+      expect(beginnerPackage).toBeDefined();
+      expect(beginnerPackage?.name).toBe('Complete Beginner Package');
+      expect(beginnerPackage?.courses).toContain('patternmaking-classic-skirt');
+      expect(beginnerPackage?.courses).toContain('adobe-illustrator-basics');
+      expect(beginnerPackage?.level).toBe('beginner');
+    });
+
+    test('should have packages at different levels', () => {
+      const beginnerPackages = getCoursePackagesByLevel('beginner');
+      const intermediatePackages = getCoursePackagesByLevel('intermediate');
+      
+      expect(beginnerPackages.length).toBeGreaterThan(0);
+      expect(intermediatePackages.length).toBeGreaterThan(0);
+    });
+
+    test('should calculate package savings correctly', () => {
+      const packageValue = calculatePackageValue('beginner-complete-package');
+      expect(packageValue).toBeDefined();
+      expect(packageValue?.savings).toBeGreaterThan(0);
+      expect(packageValue?.discounted).toBeLessThan(packageValue?.original || 0);
+    });
+
+    test('should have all package courses exist in course catalog', () => {
+      COURSE_PACKAGES.forEach(pkg => {
+        pkg.courses.forEach(courseId => {
+          const course = getCourseById(courseId);
+          expect(course).toBeDefined();
+        });
+      });
+    });
+
+    test('should have meaningful package discounts', () => {
+      COURSE_PACKAGES.forEach(pkg => {
+        expect(pkg.pricing.discount).toBeGreaterThan(15); // At least 15% discount
+        expect(pkg.pricing.discount).toBeLessThan(25); // Max 25% discount
       });
     });
   });

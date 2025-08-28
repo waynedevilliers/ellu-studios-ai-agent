@@ -207,7 +207,7 @@ export class RecommendationEngine {
     return `
 **${course1.name}** vs **${course2.name}**:
 
-**Approach**: ${course1.name} uses ${course1.category === 'construction' ? 'mathematical, precise methods' : 'creative, intuitive techniques'}, while ${course2.name} focuses on ${course2.category === 'construction' ? 'systematic construction' : 'artistic expression'}.
+**Approach**: ${course1.name} uses ${course1.category === 'patternmaking' ? 'mathematical, precise methods' : course1.category === 'draping' ? 'creative, intuitive techniques' : course1.category === 'sewing' ? 'practical construction methods' : 'creative design approach'}, while ${course2.name} focuses on ${course2.category === 'patternmaking' ? 'systematic construction' : course2.category === 'draping' ? 'artistic expression' : course2.category === 'sewing' ? 'hands-on skills' : 'creative development'}.
 
 **Duration**: ${course1.duration} vs ${course2.duration}
 
@@ -215,7 +215,7 @@ export class RecommendationEngine {
 
 **Investment**: ${course1.pricing.amount}€ vs ${course2.pricing.amount}€
 
-Both courses lead to valuable skills, but your choice depends on whether you prefer ${course1.category === 'construction' ? 'structured precision' : 'creative freedom'} or ${course2.category === 'construction' ? 'technical accuracy' : 'artistic expression'}.
+Both courses lead to valuable skills, but your choice depends on whether you prefer ${course1.category === 'patternmaking' ? 'structured precision' : course1.category === 'sewing' ? 'hands-on mastery' : 'creative freedom'} or ${course2.category === 'patternmaking' ? 'technical accuracy' : course2.category === 'sewing' ? 'construction excellence' : 'artistic expression'}.
     `.trim();
   }
 }

@@ -2,23 +2,25 @@
 // Following CLAUDE.md requirements and Next.js standards
 
 import { NextRequest, NextResponse } from 'next/server';
-import { ELLUAgent } from '@/lib/agent/core';
+import { AdvancedELLUAgent } from '@/lib/agent/advanced-agent';
 import { validateUserMessage } from '@/lib/security/validation';
+import { LLMSettings } from '@/lib/llm/multi-llm-agent';
 import { z } from 'zod';
 
 // Session storage (in production, use Redis or database)
-const sessions = new Map<string, ELLUAgent>();
+const sessions = new Map<string, AdvancedELLUAgent>();
 
 export async function POST(request: NextRequest) {
   try {
     // Parse and validate request body
     const body = await request.json();
     const { message, sessionId } = validateUserMessage(body);
+    const llmSettings: Partial<LLMSettings> = body.llmSettings || {};
 
     // Get or create agent session
     let agent = sessions.get(sessionId);
     if (!agent) {
-      agent = new ELLUAgent(sessionId);
+      agent = new AdvancedELLUAgent(llmSettings);
       sessions.set(sessionId, agent);
     }
 
@@ -29,6 +31,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       response: result.response,
       blocked: result.blocked || false,
+      tokensUsed: result.tokensUsed || 0,
       sessionId,
       timestamp: new Date().toISOString()
     });
@@ -39,7 +42,7 @@ export async function POST(request: NextRequest) {
     // Handle validation errors
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid input', details: error.errors },
+        { error: 'Invalid input', details: error.issues },
         { status: 400 }
       );
     }
@@ -59,6 +62,11 @@ export async function GET() {
     endpoints: {
       POST: 'Send message to agent',
       GET: 'API information'
+    },
+    debug: {
+      hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+      keyPrefix: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.substring(0, 10) + '...' : 'none',
+      nodeEnv: process.env.NODE_ENV
     }
   });
 }

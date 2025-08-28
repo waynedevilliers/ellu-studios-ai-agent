@@ -37,6 +37,15 @@ export class ELLUAgent {
       // Sanitize input
       const cleanInput = sanitizeInput(userInput);
       
+      // Handle very long inputs gracefully
+      if (cleanInput.length > 2000) {
+        return {
+          response: "I notice your message is quite long. I'm having trouble processing very lengthy requests. Could you please ask your question in a more concise way? I'm here to help with course recommendations and information about ELLU Studios!",
+          blocked: false,
+          reason: 'message too long'
+        };
+      }
+      
       // Add to conversation history
       this.addMessage('user', cleanInput);
 
@@ -63,10 +72,25 @@ export class ELLUAgent {
    * Generate response based on conversation phase and user input
    */
   private async generateResponse(userInput: string): Promise<string> {
-    // Detect intent
-    const intent = this.detectIntent(userInput);
-    this.state.intents.push(intent);
+    // Detect intent first - this overrides phase-based flow for direct requests
+    const intents = this.detectIntent(userInput);
+    this.state.intents.push(...intents);
 
+    // Handle direct intents regardless of current phase
+    if (intents.includes('compare')) {
+      return this.handleCourseComparison(userInput);
+    }
+    
+    if (intents.includes('schedule')) {
+      this.state.phase = 'scheduling';
+      return this.handleScheduling(userInput);
+    }
+    
+    if (intents.includes('email')) {
+      return this.handleEmailCapture(userInput);
+    }
+
+    // Otherwise follow phase-based flow
     switch (this.state.phase) {
       case 'greeting':
         return this.handleGreeting(userInput);
@@ -161,7 +185,7 @@ First, could you tell me about your current experience with sewing and pattern m
     return `I'm happy to provide more details about any of these courses or help you compare different options. 
 
 You can ask me things like:
-- "Tell me more about the Klassische Schnittkonstruktion course"
+- "Tell me more about the Classical Pattern Making course"
 - "What's the difference between construction and draping?"
 - "Can you compare the beginner and digital journeys?"
 
@@ -219,13 +243,13 @@ What sounds most helpful?`;
     // Simple comparison between construction and draping (most common request)
     return `Great question! Here's the key difference:
 
-**Klassische Schnittkonstruktion (Construction):**
+**Classical Pattern Making (Klassische Schnittkonstruktion):**
 - Mathematical, precise approach
 - Perfect for structured garments (suits, coats, fitted dresses)
 - German engineering precision - very systematic
 - Ideal if you love technical accuracy and detailed measurements
 
-**Schnittkonstruktion durch Drapieren (Draping):**
+**Pattern Making through Draping (Schnittkonstruktion durch Drapieren):**
 - Creative, intuitive approach  
 - Perfect for flowing, artistic designs (evening wear, avant-garde pieces)
 - Parisian atelier techniques - very artistic
@@ -327,13 +351,14 @@ What else would you like to know about your fashion education journey?`;
       this.state.userProfile.goals = goals;
     }
 
-    // Style preference detection
-    if (input.includes('precise') || input.includes('technical') || input.includes('mathematical') || input.includes('systematic')) {
+    // Style preference detection - check for mixed first, then specific
+    if (input.includes('both') || input.includes('open') || input.includes('either') || 
+        (input.includes('creative') && input.includes('technical'))) {
+      this.state.userProfile.preferredStyle = 'mixed';
+    } else if (input.includes('precise') || input.includes('technical') || input.includes('mathematical') || input.includes('systematic')) {
       this.state.userProfile.preferredStyle = 'precise-technical';
     } else if (input.includes('creative') || input.includes('intuitive') || input.includes('artistic') || input.includes('organic')) {
       this.state.userProfile.preferredStyle = 'creative-intuitive';
-    } else if (input.includes('both') || input.includes('open') || input.includes('either')) {
-      this.state.userProfile.preferredStyle = 'mixed';
     }
   }
 

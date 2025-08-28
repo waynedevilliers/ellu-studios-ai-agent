@@ -12,7 +12,7 @@ export interface Course {
   skills: string[];
   prerequisites: string[];
   outcomes: string[];
-  category: 'construction' | 'draping' | 'digital' | 'sustainable';
+  category: 'patternmaking' | 'draping' | 'sewing' | 'design' | 'digital' | 'textiles' | 'sustainable';
   pricing: {
     amount: number;
     currency: string;
@@ -46,6 +46,7 @@ export interface UserProfile {
   timeCommitment: 'minimal' | 'moderate' | 'intensive';
   interests: string[];
   preferredStyle: 'precise-technical' | 'creative-intuitive' | 'mixed';
+  preferredLanguage?: 'german' | 'english' | 'mixed';
   budget?: 'budget-conscious' | 'moderate' | 'premium';
   timeline?: 'asap' | '1-3months' | '3-6months' | 'flexible';
   email?: string;
@@ -75,6 +76,23 @@ export interface Message {
     intent?: string;
     confidence?: number;
   };
+}
+
+export interface CoursePackage {
+  id: string;
+  name: string;
+  nameGerman: string;
+  description: string;
+  level: 'beginner' | 'intermediate' | 'advanced';
+  duration: string;
+  courses: string[]; // Course IDs
+  pricing: {
+    amount: number;
+    currency: string;
+    discount: number; // Percentage discount vs individual courses
+  };
+  targetAudience: string[];
+  outcomes: string[];
 }
 
 export interface AssessmentQuestion {

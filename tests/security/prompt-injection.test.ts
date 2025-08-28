@@ -43,7 +43,7 @@ describe('Prompt Injection Protection', () => {
   test('should sanitize user input properly', () => {
     const testInputs = [
       { input: "  Hello world  ", expected: "Hello world" },
-      { input: "<script>alert('hack')</script>", expected: "script>alert('hack')/script>" },
+      { input: "<script>alert('hack')</script>", expected: "scriptalert('hack')/script" },
       { input: "Normal question about courses?", expected: "Normal question about courses?" },
       { input: "A".repeat(3000), expected: "A".repeat(2000) } // Length limit
     ];
